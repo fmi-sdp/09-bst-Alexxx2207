@@ -1,9 +1,13 @@
 ﻿#pragma once
 #include <algorithm>
+#include <cctype>
+#include <iostream>
 
 template <typename T>
 class BinarySearchTree {
 private:
+
+public:
 	struct node {
 		T key;
 		node* left;
@@ -11,8 +15,29 @@ private:
 
 		node(const T& key = T(), node* left = nullptr, node* right = nullptr)
 			: key(key), left(left), right(right) {}
+
+		void inorder() const {
+			if (left)
+				left->inorder();
+			std::cout << " " << key << " ";
+			if(right)
+				right->inorder();
+		}
+
+		T sumOfElements() {
+			T result = T();
+			if(left)
+				result += left->sumOfElements();
+
+			result += key;
+
+			if(right) 
+				result += right->sumOfElements();
+		
+			return result;
+		}
 	};
-public:
+
 	BinarySearchTree() : root(nullptr), size(0) {}
 
 	BinarySearchTree(const BinarySearchTree& other)
@@ -36,6 +61,9 @@ public:
 	size_t get_size() const { return size; }
 	bool is_balanced() const { return is_balanced(root); }
 	bool is_perfectly_balanced() const { return is_perfectly_balanced(root); }
+	static BinarySearchTree<T>* buildTree(char const*);
+	void inorder() const;
+	T sumOfElements() const;
 
 private:
 	void clear(node* root);
@@ -51,15 +79,70 @@ private:
 
 	bool is_balanced(const node* root) const;
 	bool is_perfectly_balanced(const node* root) const;
+	static node* buildTreeHelper(char const*&);
 
 private:
 	node* root;
 	size_t size;
 };
 
-template<typename T>
-inline void BinarySearchTree<T>::clear(node* root) {
-	if (!root) 
+template <>
+inline BinarySearchTree<int>::node* BinarySearchTree<int>::buildTreeHelper(char const*& letter) {
+	//letter = (
+	++letter;
+	
+	// digit or )
+	if(*letter == ')') {
+		++letter;
+		return nullptr;
+	}
+
+	int value = 0; 
+    while(isdigit(*letter)) {
+		value = value*10 + (*letter-'0');
+		++letter;
+	}
+
+	// letter = (
+	node* left = buildTreeHelper(letter);
+	// letter = (
+	node* right = buildTreeHelper(letter);
+
+	while(*letter == ')') {
+		++letter;
+	}
+
+	return new node(value, left, right);
+}
+
+template <typename T>
+inline BinarySearchTree<T>* BinarySearchTree<T>::buildTree(char const * letters) {
+	BinarySearchTree<T>* result = new BinarySearchTree<T>();
+
+	result->root = buildTreeHelper(letters);
+	result->size = result->weight(result->root);
+
+    return result;
+}
+
+template <typename T>
+inline void BinarySearchTree<T>::inorder() const {
+	this->root->inorder();
+}
+
+template <>
+inline int BinarySearchTree<int>::sumOfElements() const {
+	if(!root) {
+		return 0;
+	}
+
+	return root->sumOfElements();
+}
+
+template <typename T>
+inline void BinarySearchTree<T>::clear(node *root)
+{
+    if (!root) 
 		return;
 
 	clear(root->left);
@@ -180,13 +263,3 @@ inline bool BinarySearchTree<T>::is_perfectly_balanced(const node* root) const {
 		&& is_perfectly_balanced(root->right)
 		&& abs(weight(root->left) - weight(root->right)) <= 1;
 }
-
-
-
-
-
-
-
-
-
-
